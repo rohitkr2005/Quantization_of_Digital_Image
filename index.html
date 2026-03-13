@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantization — Shades of Gray</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0e0e1a;
+            color: #e0e0ec;
+            min-height: 100vh;
+            padding: 40px 24px 60px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            background: linear-gradient(90deg, #7c6fff, #00d4aa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8888aa;
+            font-size: 0.95rem;
+            margin-bottom: 36px;
+        }
+
+        /* Bit Buttons */
+        .bit-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 36px;
+        }
+
+        .bit-btn {
+            padding: 12px 22px;
+            border: 2px solid #2a2a45;
+            border-radius: 12px;
+            background: #16162a;
+            color: #b0b0cc;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            min-width: 70px;
+        }
+
+        .bit-btn:hover {
+            border-color: #7c6fff;
+            background: #1e1e38;
+            transform: translateY(-2px);
+        }
+
+        .bit-btn.active {
+            border-color: #7c6fff;
+            background: linear-gradient(135deg, #2a1f6e, #1a3a4a);
+            color: #fff;
+            box-shadow: 0 0 20px rgba(124, 111, 255, 0.25);
+        }
+
+        .bit-btn .bit-label {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .bit-btn .shade-count {
+            font-size: 0.7rem;
+            color: #7c6fff;
+            font-weight: 500;
+        }
+
+        .bit-btn.active .shade-count {
+            color: #00d4aa;
+        }
+
+        /* Info Bar */
+        .info-bar {
+            text-align: center;
+            margin-bottom: 28px;
+            font-size: 1.15rem;
+        }
+
+        .info-bar .highlight {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: #7c6fff;
+        }
+
+        .info-bar .formula {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 6px 16px;
+            background: rgba(124, 111, 255, 0.1);
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #00d4aa;
+        }
+
+        /* Shade Display */
+        .shade-section {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .shade-label {
+            font-size: 0.85rem;
+            color: #8888aa;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .shade-bar {
+            display: flex;
+            width: 100%;
+            height: 120px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 2px solid #2a2a45;
+            margin-bottom: 8px;
+            transition: all 0.4s ease;
+        }
+
+        .shade-cell {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            transition: flex 0.5s ease, background-color 0.4s ease;
+            position: relative;
+            cursor: default;
+        }
+
+        .shade-cell .cell-value {
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.35);
+            color: #fff;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            font-size: 0.7rem;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateY(5px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .shade-bar:hover .cell-value {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Level numbers below the bar */
+        .level-markers {
+            display: flex;
+            width: 100%;
+            margin-bottom: 32px;
+        }
+
+        .level-marker {
+            flex: 1;
+            text-align: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: #666688;
+            padding-top: 4px;
+        }
+
+        /* Color Shade Bars */
+        .color-section {
+            margin-top: 12px;
+        }
+
+        .color-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .color-shade-bar {
+            display: flex;
+            width: 100%;
+            height: 60px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #2a2a45;
+            margin-bottom: 20px;
+        }
+
+        .color-shade-bar .shade-cell {
+            height: 60px;
+        }
+
+        /* Range Table */
+        .range-section {
+            max-width: 900px;
+            margin: 32px auto 0;
+        }
+
+        .range-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-formula {
+            padding: 14px 20px;
+            background: #14142a;
+            border: 1px solid #2a2a45;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem;
+            color: #c0c0dd;
+            line-height: 1.8;
+        }
+
+        .step-formula .val {
+            color: #7c6fff;
+            font-weight: 700;
+        }
+
+        .step-formula .result {
+            color: #00d4aa;
+            font-weight: 700;
+        }
+
+        .range-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #2a2a45;
+            margin-bottom: 12px;
+        }
+
+        .range-table th {
+            background: #1a1a35;
+            padding: 10px 14px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #8888bb;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            text-align: center;
+            border-bottom: 1px solid #2a2a45;
+        }
+
+        .range-table td {
+            padding: 8px 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(42, 42, 69, 0.5);
+            color: #c8c8e0;
+        }
+
+        .range-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .range-table tr:hover td {
+            background: rgba(124, 111, 255, 0.06);
+        }
+
+        .range-table .swatch {
+            display: inline-block;
+            width: 32px;
+            height: 18px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            vertical-align: middle;
+        }
+
+        .range-table .output-val {
+            color: #00d4aa;
+            font-weight: 700;
+        }
+
+        .range-table .range-val {
+            color: #b0b0cc;
+        }
+
+        .range-table .formula-col {
+            color: #8888bb;
+            font-size: 0.75rem;
+        }
+
+        .range-note {
+            font-size: 0.78rem;
+            color: #666688;
+            margin-bottom: 10px;
+            font-style: italic;
+        }
+
+        /* Explanation */
+        .explanation {
+            max-width: 900px;
+            margin: 40px auto 0;
+            padding: 24px;
+            background: #14142a;
+            border: 1px solid #2a2a45;
+            border-radius: 14px;
+            font-size: 0.88rem;
+            color: #9999bb;
+            line-height: 1.7;
+        }
+
+        .explanation h3 {
+            color: #e0e0ec;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            .shade-bar {
+                height: 80px;
+            }
+
+            .color-shade-bar {
+                height: 45px;
+            }
+
+            .bit-btn {
+                padding: 10px 14px;
+                min-width: 58px;
+            }
+
+            .bit-btn .bit-label {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Image Quantization</h1>
+    <p class="subtitle">See how bit depth controls the number of intensity levels (shades)</p>
+
+    <!-- Bit Buttons -->
+    <div class="bit-buttons" id="bitButtons"></div>
+
+    <!-- Info -->
+    <div class="info-bar" id="infoBar"></div>
+
+    <!-- Shade Bars -->
+    <div class="shade-section">
+        <div class="shade-label">Grayscale Shades</div>
+        <div class="shade-bar" id="grayBar"></div>
+        <div class="level-markers" id="levelMarkers"></div>
+
+        <div class="color-section">
+            <div class="color-label"><span class="color-dot" style="background:#ff6b6b"></span> Red Channel</div>
+            <div class="color-shade-bar" id="redBar"></div>
+
+            <div class="color-label"><span class="color-dot" style="background:#6bcb77"></span> Green Channel</div>
+            <div class="color-shade-bar" id="greenBar"></div>
+
+            <div class="color-label"><span class="color-dot" style="background:#6c8cff"></span> Blue Channel</div>
+            <div class="color-shade-bar" id="blueBar"></div>
+        </div>
+    </div>
+
+    <!-- Range Breakdown -->
+    <div class="range-section">
+        <div class="range-title">📐 Calculation Breakdown</div>
+        <div class="step-formula" id="stepFormula"></div>
+        <div id="rangeTableContainer"></div>
+        <div class="range-note" id="rangeNote"></div>
+    </div>
+
+    <!-- Explanation -->
+    <div class="explanation">
+        <h3>How does it work?</h3>
+        <p>
+            In digital image processing, <strong>quantization</strong> determines how many distinct intensity levels a
+            pixel can have.
+            The number of levels is <strong>2<sup>n</sup></strong>, where <strong>n</strong> is the bit depth.<br><br>
+            For example, a <strong>1-bit</strong> image has only <strong>2</strong> shades (black & white),
+            while an <strong>8-bit</strong> image has <strong>256</strong> shades — enough for smooth gradients.
+            As you decrease the bits, you can clearly see the visible &quot;banding&quot; effect known as <strong>false
+                contouring</strong>.
+        </p>
+    </div>
+
+    <script>
+        const grayBar = document.getElementById('grayBar');
+        const redBar = document.getElementById('redBar');
+        const greenBar = document.getElementById('greenBar');
+        const blueBar = document.getElementById('blueBar');
+        const levelMarkers = document.getElementById('levelMarkers');
+        const infoBar = document.getElementById('infoBar');
+        const bitButtonsContainer = document.getElementById('bitButtons');
+
+        let activeBits = 3;
+
+        // Create bit buttons (2 to 16)
+        for (let b = 1; b <= 8; b++) {
+            const btn = document.createElement('button');
+            btn.className = 'bit-btn' + (b === activeBits ? ' active' : '');
+            btn.innerHTML = `<span class="bit-label">${b}-bit</span><span class="shade-count">${Math.pow(2, b)} shades</span>`;
+            btn.addEventListener('click', () => selectBits(b));
+            bitButtonsContainer.appendChild(btn);
+        }
+
+        function selectBits(bits) {
+            activeBits = bits;
+            // Update active button
+            document.querySelectorAll('.bit-btn').forEach((btn, i) => {
+                btn.classList.toggle('active', (i + 1) === bits);
+            });
+            render();
+        }
+
+        function render() {
+            const levels = Math.pow(2, activeBits);
+            const stepSize = 256 / levels;
+
+            // Info bar
+            infoBar.innerHTML = `
+                <span class="highlight">${activeBits}-bit</span> quantization →
+                <span class="highlight">${levels}</span> intensity levels
+                <br>
+                <span class="formula">Levels = 2<sup>${activeBits}</sup> = ${levels}</span>
+            `;
+
+            // Build shade cells
+            buildBar(grayBar, levels, 'gray');
+            buildBar(redBar, levels, 'red');
+            buildBar(greenBar, levels, 'green');
+            buildBar(blueBar, levels, 'blue');
+
+            // Level markers
+            levelMarkers.innerHTML = '';
+            for (let i = 0; i < levels; i++) {
+                const marker = document.createElement('div');
+                marker.className = 'level-marker';
+                if (levels <= 32) {
+                    marker.textContent = i;
+                } else if (i % Math.ceil(levels / 16) === 0 || i === levels - 1) {
+                    marker.textContent = i;
+                }
+                levelMarkers.appendChild(marker);
+            }
+
+            // Step formula
+            document.getElementById('stepFormula').innerHTML = `
+                Step size = 256 / <span class="val">${levels}</span> = <span class="result">${stepSize}</span><br>
+                For any input pixel value <span class="val">I</span> (0–255):<br>
+                &nbsp;&nbsp;Level index = floor(<span class="val">I</span> / <span class="result">${stepSize}</span>)<br>
+                &nbsp;&nbsp;Output value = Level index × <span class="result">${(255 / (levels - 1)).toFixed(2)}</span> &nbsp;(mapped to 0–255)
+            `;
+
+            // Range table
+            buildRangeTable(levels, stepSize);
+        }
+
+        function buildRangeTable(levels, stepSize) {
+            const container = document.getElementById('rangeTableContainer');
+            const note = document.getElementById('rangeNote');
+
+            // For too many levels (>32), show a summary instead of full table
+            const showAll = levels <= 32;
+            const displayLevels = showAll ? levels : 16;
+
+            let html = `<table class="range-table">
+                <thead><tr>
+                    <th>Level</th>
+                    <th>Input Range (0–255)</th>
+                    <th>Calculation</th>
+                    <th>Output Value</th>
+                    <th>Shade</th>
+                </tr></thead><tbody>`;
+
+            for (let i = 0; i < (showAll ? levels : displayLevels); i++) {
+                const idx = showAll ? i : Math.round(i * (levels - 1) / (displayLevels - 1));
+                const rangeStart = Math.round(idx * stepSize);
+                const rangeEnd = Math.min(255, Math.round((idx + 1) * stepSize) - 1);
+                const outputVal = levels === 1 ? 0 : Math.round((idx / (levels - 1)) * 255);
+
+                html += `<tr>
+                    <td>${idx}</td>
+                    <td class="range-val">${rangeStart} – ${rangeEnd}</td>
+                    <td class="formula-col">${idx} × ${(255 / (levels - 1)).toFixed(2)}</td>
+                    <td class="output-val">${outputVal}</td>
+                    <td><span class="swatch" style="background:rgb(${outputVal},${outputVal},${outputVal})"></span></td>
+                </tr>`;
+            }
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+
+            if (!showAll) {
+                note.textContent = `Showing ${displayLevels} of ${levels} levels. Full range: 0–255 divided into ${levels} equal steps of ${stepSize.toFixed(2)} each.`;
+            } else {
+                note.textContent = `All ${levels} levels shown. The 0–255 range is divided into ${levels} equal steps of ${stepSize} each.`;
+            }
+        }
+
+        function buildBar(container, levels, channel) {
+            container.innerHTML = '';
+            for (let i = 0; i < levels; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'shade-cell';
+
+                // Calculate the intensity value (0 to 255)
+                const intensity = levels === 1 ? 0 : Math.round((i / (levels - 1)) * 255);
+
+                // Set background color based on channel
+                if (channel === 'gray') {
+                    cell.style.backgroundColor = `rgb(${intensity}, ${intensity}, ${intensity})`;
+                } else if (channel === 'red') {
+                    cell.style.backgroundColor = `rgb(${intensity}, 0, 0)`;
+                } else if (channel === 'green') {
+                    cell.style.backgroundColor = `rgb(0, ${intensity}, 0)`;
+                } else if (channel === 'blue') {
+                    cell.style.backgroundColor = `rgb(0, 0, ${intensity})`;
+                }
+
+                // Label inside cell
+                const label = document.createElement('span');
+                label.className = 'cell-value';
+                label.textContent = intensity;
+                cell.appendChild(label);
+
+                container.appendChild(cell);
+            }
+        }
+
+        // Initial render
+        render();
+    </script>
+</body>
+
+</html>
