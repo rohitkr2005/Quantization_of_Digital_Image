@@ -29,17 +29,6 @@ $$\text{Step Size} = \frac{256}{L}$$
 
 The input pixel intensity ($I$) is then mapped to a specific level index, which determines its final quantized output value.
 
-## 🚀 How to Run Locally
-
-Since this is a static, zero-dependency project, running it locally is incredibly simple:
-
-1. Clone this repository:
-   ```bash
-   git clone [https://github.com/your-username/quantization-visualizer.git](https://github.com/your-username/quantization-visualizer.git)
-
-
-2. Navigate to the project directory.
-3. Open `index.html` directly in any modern web browser.
 
 ## 🤝 Contributing
 
